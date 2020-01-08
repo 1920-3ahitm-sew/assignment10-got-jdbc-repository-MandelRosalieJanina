@@ -16,11 +16,16 @@ public class PersonRepository implements Repository {
     private static PersonRepository instance;
 
     private PersonRepository() {
+
+        createTable();
     }
 
     public static synchronized PersonRepository getInstance() {
 
-        return null;
+        if(instance == null){
+            instance = new PersonRepository();
+        }
+        return instance;
     }
 
     private void createTable() {
@@ -43,6 +48,17 @@ public class PersonRepository implements Repository {
 
     public void deleteAll() {
 
+        try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD)) {
+
+            // Inhalt der Tabelle löschen
+            String sql = "DELETE FROM " + TABLE_NAME;
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            final int rowsAffected = pstmt.executeUpdate();
+            System.out.println(rowsAffected + " Zeile(n) wurde(n) gelöscht");
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        }
+
     }
 
     /**
@@ -61,8 +77,7 @@ public class PersonRepository implements Repository {
      */
     @Override
     public Person save(Person newPerson) {
-
-        return null;
+        return insert(newPerson);
     }
 
     /**
@@ -74,7 +89,31 @@ public class PersonRepository implements Repository {
      */
     private Person insert(Person personToSave) {
 
-        return null;
+        try (
+                Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+                PreparedStatement statement = conn.prepareStatement("INSERT INTO APP.PERSON (name,city,house) values (?,?,?)", Statement.RETURN_GENERATED_KEYS))
+        {
+
+
+            statement.setString(1, personToSave.getName());
+            statement.setString(2, personToSave.getCity());
+            statement.setString(3, personToSave.getHouse());
+            statement.executeUpdate();
+
+            try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    personToSave.setId(generatedKeys.getLong(1));
+                } else {
+                    throw new SQLException("Creating user failed, no ID obtained.");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        }
+
+        return personToSave;
+
+
     }
 
     /**
