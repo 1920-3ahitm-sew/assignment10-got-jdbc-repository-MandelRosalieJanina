@@ -3,6 +3,7 @@ package at.htl.gotjdbcrepository.control;
 import at.htl.gotjdbcrepository.entity.Person;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -141,6 +142,28 @@ public class PersonRepository implements Repository {
      */
     public Person find(long id) {
 
+        try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD)) {
+            try (Statement stmt = conn.createStatement()) {
+                String query = "SELECT * FROM " + TABLE_NAME;
+                ResultSet rs = stmt.executeQuery(query);
+
+
+                while (rs.next()) {
+
+
+                    if(id == rs.getLong("id")){
+                        Person person = new Person(rs.getString("name"), rs.getString("city"), rs.getString("house"));
+                        person.setId(rs.getLong("id"));
+                        return person;
+                    }
+
+
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        }
+
         return null;
     }
 
@@ -151,7 +174,32 @@ public class PersonRepository implements Repository {
      */
     public List<Person> findByHouse(String house) {
 
-        return null;
+        List<Person> personList = new ArrayList<>();
+
+        try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD)) {
+            try (Statement stmt = conn.createStatement()) {
+                String query = "SELECT * FROM " + TABLE_NAME;
+                ResultSet rs = stmt.executeQuery(query);
+
+
+                while (rs.next()) {
+
+
+                    if(house.equals(rs.getString("house"))){
+                        Person person = new Person(rs.getString("name"), rs.getString("city"), rs.getString("house"));
+                        person.setId(rs.getLong("id"));
+
+                        personList.add(person);
+                    }
+
+
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        }
+
+        return personList;
     }
 
 
